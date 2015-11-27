@@ -20,54 +20,32 @@ PVector mouse_enemy = new PVector(0, 0);
 
 int NEIGHBOUR_RADIUS = 60;
 int MAX_SPEED = 1.5;
-int MAX_FORCE = 0.05; // 0.2
+int MAX_FORCE = 0.04; // 0.05
 int DESIRED_SEPARATION = 15; // 20
 int MOUSE_SEPARATION = 30;
+
+decorate = new Boolean(false);
 
 int separation_weight       = 1;   // 3
 int alignment_weight        = 0.4; // 0.5
 int cohesion_weight         = 0.2; // 0.3
-int mouse_separation_weight = 5;   // FEAR THE ALMIGHTY MOUSE!
+int mouse_separation_weight = 3;   // FEAR THE ALMIGHTY MOUSE!
 
 void setup() {
-    //smooth ?
+    smooth();
     size(w, h);
     frameRate(20);
     PImage boid_image = loadImage("bird.png");
 
     PVector pos = new PVector(w/2, h/2);
 
-/*
-    PVector speed = new PVector(0.4, 0.3);
-    Boid b = new Boid(0, boid_image, pos, speed);
-    boids.add(b);
-
-    speed = new PVector(0.3, -0.1);
-    b = new Boid(1, boid_image, pos, speed);
-    boids.add(b);
-
-    speed = new PVector(-0.35, 0.3);
-    b = new Boid(2, boid_image, pos, speed);
-    boids.add(b);
-
-    speed = new PVector(-0.3, -0.45);
-    b = new Boid(3, boid_image, pos, speed);
-    boids.add(b);
-
-    speed = new PVector(0.5, 0.0);
-    b = new Boid(4, boid_image, pos, speed);
-    boids.add(b);
-*/
-
     // fill boids
-    int n = 100;
+    int n = 80;
     for (int i = 0; i < n; i++) {
         PVector speed = new PVector(i/(n*5)-0.1, i/(n*5)-0.1);
         Boid b = new Boid(i, boid_image, pos, speed);
         boids.add(b);
     }
-
-    println('Initialized.');
 }
 
 // main loop
@@ -84,11 +62,13 @@ void draw() {
 
     // draw
     background(255);
+    stroke(0, 0, 0);
+    rect(0, 0, w-1, h-1);
+
     for (int i = 0; i < boids.size(); i++) {
         Boid b = boids.get(i);
-        x = b.pos.x; //x = mod(b.pos.x, w);
-        y = b.pos.y; //y = mod(b.pos.y, h);
-        //if (b.id == 0) println("pos: " + x + "/" + y);
+        x = b.pos.x;
+        y = b.pos.y;
 
         pushMatrix();
         translate(x, y);
@@ -98,7 +78,11 @@ void draw() {
 
         if (b.id == 0) {
             noFill();
-            stroke(0, 0, 0);
+            if (decorate) {
+                stroke(0, 0, 0);
+            } else {
+                stroke(0, 255, 0);
+            }
             ellipse(x, y, NEIGHBOUR_RADIUS*2, NEIGHBOUR_RADIUS*2); // neighbour-radius
 
             stroke(255, 0, 255);
@@ -134,22 +118,34 @@ function mod(n, m) {
     return ((n % m) + m) % m;
 }
 
+PVector roundVector(v) {
+    v.x = Math.round(v.x * 100) / 100;
+    v.y = Math.round(v.y * 100) / 100;
+    return v;
+}
+
 /*
  * Mouse input. Sets a gravity field which the boids avoid.
  */
 void mousePressed() {
+
   if (mouseButton == LEFT) {
-      mouse_enemy.x = mouseX;
-      mouse_enemy.y = mouseY;
-  } else {
-      mouse_enemy = new PVector(0, 0);
+      if (mouse_enemy.x == 0 && mouse_enemy.y == 0) {
+        mouse_enemy.x = mouseX;
+        mouse_enemy.y = mouseY;
+      } else {
+          mouse_enemy = new PVector(0, 0);
+      }
+  } else if (mouseButton == RIGHT)  {
+      decorate = !decorate;
   }
 }
 
 /*
  * Boid class. Represents a flying object which obeys the flocking rules.
  */
-class Boid {
+
+ class Boid {
     int id, x, y, img_w = 16, img_h = 16;
     float rot;
     PImage img;
@@ -191,8 +187,6 @@ class Boid {
         if (n.size() > 0) alignment.div(n.size()); // mean speed vector
         alignment.limit(MAX_FORCE);
 
-        //println('alignment: ' + alignment);
-
         // separation
         separation = new PVector(0, 0);
         int count = 0;
@@ -211,7 +205,6 @@ class Boid {
             }
         }
         if (count > 0) separation.div(count);
-        //println('separation: ' + separation);
 
         // cohesion
         cohesion = new PVector(0, 0);
@@ -222,22 +215,20 @@ class Boid {
             cohesion.div(n.size()); // center of mass
             cohesion.sub(pos); // cohesion - pos
 
-            /*
-            d = cohesion.mag();
-            cohesion.normalize();
-            // damping
-            if (d < 100.0) {
-              cohesion.mult(MAX_SPEED * (d / 100.0));
-            } else {
-              cohesion.mult(MAX_SPEED);
+            if (decorate) {
+                d = cohesion.mag();
+                cohesion.normalize();
+                // damping
+                if (d < 100.0) {
+                  cohesion.mult(MAX_SPEED * (d / 100.0));
+                } else {
+                  cohesion.mult(MAX_SPEED);
+                }
+                cohesion.sub(speed);
             }
-            cohesion.sub(speed);
-            */
 
             cohesion.limit(MAX_FORCE);
         }
-        //println('cohesion: ' + cohesion);
-
 
         // mouse_enemy
         PVector mouse_separation = new PVector(0, 0);
@@ -253,9 +244,11 @@ class Boid {
             }
         }
 
+        /*
         if (id == 0) {
-            println('Forces: al = ' + alignment + ', sep = ' + separation + ', co = ' + cohesion);
+            println('Forces: al = ' + roundVector(alignment) + ', sep = ' + roundVector(separation) + ', co = ' + roundVector(cohesion));
         }
+        */
 
         // adding it up
         alignment.mult(alignment_weight);
@@ -283,15 +276,5 @@ class Boid {
 
         // calculate angle
         rot = calculateAngle(v_normal, speed);
-        //rot = PVector.angleBetween(v_normal, speed);
-        //if (speed.y < 0) { rot = 2*PI - rot; }
-    }
-
-    void addSpeed(PVector v) {
-        speed.add(v);
-    }
-
-    int getId() {
-        return id;
     }
 }
