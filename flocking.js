@@ -17,7 +17,7 @@ boids = new ArrayList();
 int w = 600, h = 400;
 PVector v_normal = new PVector(1, 0);
 PVector mouse_enemy = new PVector(0, 0);
-decorate = new Boolean(false);
+decorate = false;
 
 int NEIGHBOUR_RADIUS = 60;
 int DESIRED_SEPARATION = 15;
@@ -80,8 +80,8 @@ void draw() {
         image(b.img, -b.img_w/2, -b.img_h/2);
         popMatrix();
 
+        noFill();
         if (decorate && b.id == 0) {
-            noFill();
             stroke(0, 0, 0);
             ellipse(x, y, NEIGHBOUR_RADIUS*2, NEIGHBOUR_RADIUS*2); // neighbour-radius
             stroke(255, 0, 255);
@@ -101,10 +101,8 @@ void draw() {
 /* Calculates the clockwise angle between two vectors. */
 float calculateAngle(PVector a, PVector b) {
     float rot = PVector.angleBetween(a, b);
-    if (b.y < 0) {
-        rot = 2*PI - rot;
-     }
-     return rot;
+    if (b.y < 0) rot = 2*PI - rot;
+    return rot;
 }
 
 /* Correcting malfunctioning % operator for negative numbers. */
@@ -127,13 +125,12 @@ void mousePressed() {
 }
 
 /* Boid class. Represents a flying object which obeys the flocking rules. */
- class Boid {
+class Boid {
     int id, x, y, img_w = 16, img_h = 16;
     float rot;
     PImage img;
     PVector pos;
     PVector speed;
-
     PVector alignment, separation, cohesion;
 
     Boid(int _id, PImage _img, PVector _pos, PVector _speed) {
@@ -149,6 +146,7 @@ void mousePressed() {
         n = new ArrayList();
         for (int i = 0; i < boids.size(); i++) {
             Boid b = boids.get(i);
+            // if neighbour in radius and not self
             if (pos.dist(b.pos) < NEIGHBOUR_RADIUS && id != b.id)
                 n.add(b);
         }
@@ -157,8 +155,8 @@ void mousePressed() {
 
     /* Updating speed vector */
     void update() {
-        n = neighbours();
         /* ----- flocking algorithm ----- */
+        n = neighbours();
         PVector acceleration = new PVector(0, 0);
 
         // alignment: calculate mean speed vector of neighbours
@@ -175,8 +173,7 @@ void mousePressed() {
         for (int i = 0; i < n.size(); i++) {
             PVector f = n.get(i).pos;
             float d = PVector.dist(pos, f);
-
-            if (d > 0 && d < DESIRED_SEPARATION) {
+            if (d < DESIRED_SEPARATION) {
                 PVector f2 = pos.get();
                 f2.sub(f);
                 f2.normalize();
@@ -202,7 +199,7 @@ void mousePressed() {
         PVector mouse_separation = new PVector(0, 0);
         if (mouse_enemy.mag() > 0) {
             float d = PVector.dist(pos, mouse_enemy);
-            if (d > 0 && d < MOUSE_SEPARATION) {
+            if (d < MOUSE_SEPARATION) {
                 PVector f2 = pos.get();
                 f2.sub(mouse_enemy);
                 f2.normalize();
