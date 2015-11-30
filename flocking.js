@@ -1,13 +1,13 @@
 /*
-    Rewrote my Python script from 2012 to show it on the web.
-    Author: Adrianus Kleemans, a.kleemans@gmail.com
+    Demonstration of flocking algorithm, written in JS for ProcessingJS.
+    Author: Adrianus Kleemans (a.kleemans@gmail.com)
     Date: Nov 2015
 
     Neat algorithms - flocking: http://harry.me/blog/2011/02/17/neat-algorithms-flocking/
     Original post: http://www.red3d.com/cwr/boids/
     ProcessingJS reference: http://processingjs.org/reference/
 
-    Flocking algorithm shows the three forces for flocking:
+    The algorithm calculates the three forces for flocking for each boid:
      - separation: steer to avoid crowding local flockmates
      - alignment: steer towards the average heading of local flockmates
      - cohesion: steer to move toward the average position of local flockmates
@@ -20,10 +20,10 @@ PVector mouse_enemy = new PVector(0, 0);
 decorate = new Boolean(false);
 
 int NEIGHBOUR_RADIUS = 60;
-int MAX_SPEED = 1.5;
-int MAX_FORCE = 0.03;
 int DESIRED_SEPARATION = 15;
 int MOUSE_SEPARATION = 30;
+int MAX_SPEED = 1.5;
+int MAX_FORCE = 0.025;
 
 // weights
 int SEPARATION_WEIGHT       = 1;
@@ -36,9 +36,7 @@ void setup() {
     smooth();
     size(w, h);
     frameRate(20);
-    PImage boid_image = loadImage("bird.png");
-
-    PVector pos = new PVector(w/2, h/2);
+    PImage boid_image = loadImage("https://kleemans.ch/static/flocking/bird.png");
 
     // initiate boids
     int n = 100;
@@ -49,7 +47,6 @@ void setup() {
 
         // initial position near center
         PVector pos = new PVector(w/2 + Math.random()*20, h/2 + Math.random()*20);
-
         Boid b = new Boid(i, boid_image, pos, speed);
         boids.add(b);
     }
@@ -95,7 +92,7 @@ void draw() {
 
         // drawing mouse_enemy
         if (mouse_enemy.mag() > 0) {
-            stroke(128, 0, 128);
+            stroke(255, 153, 0);
             ellipse(mouse_enemy.x, mouse_enemy.y, MOUSE_SEPARATION*2, MOUSE_SEPARATION*2);
         }
     }
@@ -117,7 +114,6 @@ function mod(n, m) {
 
 /* Mouse input. Sets a gravity field which the boids avoid. */
 void mousePressed() {
-
   if (mouseButton == LEFT) {
       if (mouse_enemy.x == 0 && mouse_enemy.y == 0) {
         mouse_enemy.x = mouseX;
@@ -206,7 +202,6 @@ void mousePressed() {
         PVector mouse_separation = new PVector(0, 0);
         if (mouse_enemy.mag() > 0) {
             float d = PVector.dist(pos, mouse_enemy);
-
             if (d > 0 && d < MOUSE_SEPARATION) {
                 PVector f2 = pos.get();
                 f2.sub(mouse_enemy);
@@ -235,10 +230,8 @@ void mousePressed() {
 
     /* Moving and resetting rotation */
     void move() {
-        pos.add(speed);
-
-        pos.x = mod(pos.x, w);
-        pos.y = mod(pos.y, h);
+        pos.x = mod(pos.x + speed.x, w);
+        pos.y = mod(pos.y + speed.y, h);
 
         // calculate angle
         rot = calculateAngle(v_normal, speed);
