@@ -17,19 +17,19 @@ boids = new ArrayList();
 int w = 600, h = 400;
 PVector v_normal = new PVector(1, 0);
 PVector mouse_enemy = new PVector(0, 0);
-decorate = false;
+boolean decorate = false;
 
 int NEIGHBOUR_RADIUS = 60;
 int DESIRED_SEPARATION = 15;
 int MOUSE_SEPARATION = 30;
-int MAX_SPEED = 1.5;
-int MAX_FORCE = 0.025;
+float MAX_SPEED = 1.5;
+float MAX_FORCE = 0.025;
 
 // weights
-int SEPARATION_WEIGHT       = 1;
-int ALIGNMENT_WEIGHT        = 0.4;
-int COHESION_WEIGHT         = 0.2;
-int MOUSE_SEPARATION_WEIGHT = 3;   // FEAR THE ALMIGHTY MOUSE!
+float SEPARATION_WEIGHT       = 1;
+float ALIGNMENT_WEIGHT        = 0.4;
+float COHESION_WEIGHT         = 0.2;
+float MOUSE_SEPARATION_WEIGHT = 3;   // FEAR THE ALMIGHTY MOUSE!
 
 /* Setting up canvas and populating boids. */
 void setup() {
@@ -68,6 +68,7 @@ void draw() {
     background(255);
     stroke(0, 0, 0);
     rect(0, 0, w-1, h-1);
+    int x, y;
 
     for (int i = 0; i < boids.size(); i++) {
         Boid b = boids.get(i);
@@ -99,7 +100,7 @@ void draw() {
 }
 
 /* Calculates the clockwise angle between two vectors. */
-float calculateAngle(PVector a, PVector b) {
+function calculateAngle(PVector a, PVector b) {
     float rot = PVector.angleBetween(a, b);
     if (b.y < 0) rot = 2*PI - rot;
     return rot;
@@ -131,7 +132,7 @@ class Boid {
     PImage img;
     PVector pos;
     PVector speed;
-    PVector alignment, separation, cohesion;
+    PVector alignment, separation, cohesion, mouse_separation;
 
     Boid(int _id, PImage _img, PVector _pos, PVector _speed) {
         rot = 0;
@@ -171,14 +172,14 @@ class Boid {
         separation = new PVector(0, 0);
         int count = 0;
         for (int i = 0; i < n.size(); i++) {
-            PVector f = n.get(i).pos;
-            float d = PVector.dist(pos, f);
+            PVector neighbour_pos = n.get(i).pos;
+            float d = PVector.dist(pos, neighbour_pos);
             if (d < DESIRED_SEPARATION) {
-                PVector f2 = pos.get();
-                f2.sub(f);
-                f2.normalize();
-                f2.div(d);
-                separation.add(f2);
+                PVector repulsion = pos.get();
+                repulsion.sub(neighbour_pos);
+                repulsion.normalize();
+                repulsion.div(d);
+                separation.add(repulsion);
                 count += 1;
             }
         }
@@ -196,7 +197,7 @@ class Boid {
         }
 
         // mouse_enemy
-        PVector mouse_separation = new PVector(0, 0);
+        mouse_separation = new PVector(0, 0);
         if (mouse_enemy.mag() > 0) {
             float d = PVector.dist(pos, mouse_enemy);
             if (d < MOUSE_SEPARATION) {
