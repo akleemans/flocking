@@ -36,7 +36,7 @@ void setup() {
     smooth();
     size(w, h);
     frameRate(20);
-    PImage boid_image = loadImage("https://kleemans.ch/static/flocking/bird.png");
+    PImage boid_image = loadImage("bird.png");
 
     // initiate boids
     int n = 100;
